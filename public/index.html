@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Using MySQL with API</title>
+</head>
+<body>
+    <center>
+        <h1>User Data from MySQL</h1>
+    </center>
+    <hr>
+    <h2>Users</h2>
+    <ul id="userList"></ul>
+    <hr>
+    <h2>Add User</h2>
+    <form id="addUserForm">
+        <label for="name">Name:</label>
+        <input type="text" id="name" name="name" required>
+        <button type="submit">Add User</button>
+    </form>
+    <script>
+        const userList = document.getElementById('userList');
+        const addUserForm = document.getElementById('addUserForm');
+        const nameInput = document.getElementById('name');
+
+        // Function to fetch and display users
+        function getAllUsers() {
+            fetch("/users")
+            .then(res => res.json())
+            .then(users => {
+                userList.innerHTML = ''; // Clear the list
+                users.forEach(user => {
+                    const li = document.createElement('li');
+                    li.innerHTML = 
+                        `${user.id} : ${user.name} <button onclick="updateUser(${user.id}, '${user.name}')">Update</button> 
+                         <button onclick="deleteUser(${user.id})">Delete</button>`; 
+                    //li.textContent = user.name;
+                    userList.appendChild(li);
+                });
+            })
+        }
+
+        // Function to add a new user
+        addUserForm.addEventListener('submit', function(e){
+            e.preventDefault();
+            const name = nameInput.value.trim();
+            if (name) { 
+                fetch("/users", {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ name })
+                })
+                .then(res => res.json())
+                .then(user => {
+                    const li = document.createElement('li');
+                    li.innerHTML = 
+                        `${user.id} : ${user.name} <button onclick="updateUser(${user.id}, '${user.name}')">Update</button> 
+                         <button onclick="deleteUser(${user.id})">Delete</button>`; 
+                    //li.textContent = user.name;
+                    userList.appendChild(li);
+                    nameInput.value = ''; // Clear input field
+                })
+                .catch(err => console.error('Error adding user:', err));
+            }
+        });
+
+        // Function to update existing user
+        function updateUser(id, currentName){
+            const newName = prompt("Enter the new name:", currentName);
+            if(!newName) return;
+            fetch(`/users/${id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ name: newName })
+            }).then(()=> getAllUsers());
+
+        }
+        // Function to delete a user
+        function deleteUser(userId) {
+            //const userId = prompt("Enter the user ID to delete:");
+            if (!userId) return;
+            fetch(`/users/${userId}`, {
+                method: 'DELETE'
+            })
+            .then(() => getAllUsers())
+            .catch(err => console.error('Error deleting user:', err));
+        }
+
+        // calling the function to get user names
+        getAllUsers();
+    </script>
+</body>
+</html>
+
+
+
