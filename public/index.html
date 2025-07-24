@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!-- <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -7,22 +7,34 @@
 </head>
 <body>
     <center>
-        <h1>User Data from MySQL</h1>
+        <h1>Movies Data from MySQL</h1>
     </center>
+    
     <hr>
-    <h2>Users</h2>
-    <ul id="userList"></ul>
+    <h2>Movies</h2>
+    <ul id="movieList"></ul>
     <hr>
-    <h2>Add User</h2>
-    <form id="addUserForm">
+    <h2>Add Movies</h2>
+    <form id="addMovieForm">
         <label for="name">Name:</label>
         <input type="text" id="name" name="name" required>
-        <button type="submit">Add User</button>
+        <button type="submit">Add Movies</button>
     </form>
+    <hr>
+    <h2>Search Movies</h2>
+    <form id="searchMovieForm">
+        <label for="search">Search:</label>
+        <input type="text" id="search" name="search" placeholder="Enter movie name">
+        <button type="submit">Search</button>
+    </form>
+    <hr>
+
     <script>
-        const userList = document.getElementById('userList');
-        const addUserForm = document.getElementById('addUserForm');
+        const userList = document.getElementById('movieList');
+        const addUserForm = document.getElementById('addMovieForm');
         const nameInput = document.getElementById('name');
+        const searchMovieForm = document.getElementById('searchMovieForm');
+        const searchInput = document.getElementById('search');
 
         // Function to fetch and display users
         function getAllUsers() {
@@ -91,6 +103,28 @@
             .catch(err => console.error('Error deleting user:', err));
         }
 
+        // Function to search movies
+        searchMovieForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const query = searchInput.value.trim();
+            if (query) {
+                fetch(`/movies?search=${encodeURIComponent(query)}`)
+                .then(res => res.json())
+                .then(movies => {
+                    movieList.innerHTML = ''; // Clear the list
+                    movies.forEach(movie => {
+                        const li = document.createElement('li');
+                        li.innerHTML = 
+                            `${movie.id} : ${movie.title} <button onclick="updateMovie(${movie.id}, '${movie.title}')">Update</button> 
+                             <button onclick="deleteMovie(${movie.id})">Delete</button>`; 
+                        movieList.appendChild(li);
+                    });
+                })
+                .catch(err => console.error('Error searching movies:', err));
+            } else {
+                getAllMovies(); // If search is empty, fetch all movies
+            }
+        });
         // calling the function to get user names
         getAllUsers();
     </script>
@@ -98,4 +132,136 @@
 </html>
 
 
+ -->
 
+
+
+
+
+ <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Using MySQL with API</title>
+</head>
+<body>
+    <center>
+        <h1>Movies Data from MySQL</h1>
+    </center>
+    <hr>
+    <h2>Search Movies</h2>
+    <form id="searchMovieForm">
+        <label for="search">Search:</label>
+        <input type="text" id="search" name="search" placeholder="Enter movie name">
+        <button type="submit">Search</button>
+    </form>
+    <hr>
+    <h2>Movies</h2>
+    <ul id="movieList"></ul>
+    <hr>
+    <h2>Add Movies</h2>
+    <form id="addMovieForm">
+        <label for="name">Name:</label>
+        <input type="text" id="name" name="name" required>
+        <button type="submit">Add Movies</button>
+    </form>
+    <script>
+        const movieList = document.getElementById('movieList');
+        const addMovieForm = document.getElementById('addMovieForm');
+        const searchMovieForm = document.getElementById('searchMovieForm');
+        const nameInput = document.getElementById('name');
+        const searchInput = document.getElementById('search');
+
+        // Function to fetch and display movies
+        function getAllMovies() {
+            fetch("/movies")
+            .then(res => res.json())
+            .then(movies => {
+                movieList.innerHTML = ''; // Clear the list
+                movies.forEach(movie => {
+                    const li = document.createElement('li');
+                    li.innerHTML = 
+                        `${movie.id} : ${movie.title} <button onclick="updateMovie(${movie.id}, '${movie.title}')">Update</button> 
+                         <button onclick="deleteMovie(${movie.id})">Delete</button>`; 
+                    movieList.appendChild(li);
+                });
+            })
+        }
+
+        // Function to add a new movie
+        addMovieForm.addEventListener('submit', function(e){
+            e.preventDefault();
+            const title = nameInput.value.trim();
+            if (title) { 
+                fetch("/movies", {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ title })
+                })
+                .then(res => res.json())
+                .then(movie => {
+                    const li = document.createElement('li');
+                    li.innerHTML = 
+                        `${movie.id} : ${movie.title} <button onclick="updateMovie(${movie.id}, '${movie.title}')">Update</button> 
+                         <button onclick="deleteMovie(${movie.id})">Delete</button>`; 
+                    movieList.appendChild(li);
+                    nameInput.value = ''; // Clear input field
+                })
+                .catch(err => console.error('Error adding movie:', err));
+            }
+        });
+
+        // Function to update existing movie
+        function updateMovie(id, currentTitle){
+            const newTitle = prompt("Enter the new title:", currentTitle);
+            if(!newTitle) return;
+            fetch(`/movies/${id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ title: newTitle })
+            }).then(()=> getAllMovies());
+        }
+
+        // Function to delete a movie
+        function deleteMovie(movieId) {
+            if (!movieId) return;
+            fetch(`/movies/${movieId}`, {
+                method: 'DELETE'
+            })
+            .then(() => getAllMovies())
+            .catch(err => console.error('Error deleting movie:', err));
+        }
+
+        // Function to search movies
+        searchMovieForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const query = searchInput.value.trim();
+            if (query) {
+                fetch(`/movies?search=${encodeURIComponent(query)}`)
+                .then(res => res.json())
+                .then(movies => {
+                    movieList.innerHTML = ''; // Clear the list
+                    movies.forEach(movie => {
+                        const li = document.createElement('li');
+                        li.innerHTML = 
+                            `${movie.id} : ${movie.title} <button onclick="updateMovie(${movie.id}, '${movie.title}')">Update</button> 
+                             <button onclick="deleteMovie(${movie.id})">Delete</button>`; 
+                        movieList.appendChild(li);
+                    });
+                })
+                .catch(err => console.error('Error searching movies:', err));
+            } else {
+                getAllMovies(); // If search is empty, fetch all movies
+            }
+        });
+
+        // Initial call to fetch all movies
+        getAllMovies();
+    </script>
+</body>
+</html>
